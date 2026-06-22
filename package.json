@@ -1,0 +1,19 @@
+{
+  "name": "deobfuscator-api",
+  "version": "1.0.0",
+  "description": "Lua Deobfuscator API for Vercel",
+  "main": "api/deobfuscator.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy --prod"
+  },
+  "keywords": ["deobfuscator", "lua", "prometheus", "moonsec", "vercel"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lua Deobfuscator - API</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a0a2e, #2d1b4e);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            border: 1px solid #7e22ce;
+            box-shadow: 0 10px 40px rgba(126, 34, 206, 0.2);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand img {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid #7e22ce;
+        }
+
+        .brand h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #c084fc;
+            text-shadow: 0 0 20px rgba(192, 132, 252, 0.3);
+        }
+
+        .brand span {
+            font-size: 0.7rem;
+            color: #d8b4fe;
+            display: block;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(30, 15, 45, 0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #581c87;
+        }
+
+        .api-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Tool Selection */
+        .tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .tool-card {
+            background: rgba(20, 10, 30, 0.85);
+            border: 2px solid #7e22ce;
+            border-radius: 15px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-3px);
+            border-color: #c084fc;
+            box-shadow: 0 8px 30px rgba(192, 132, 252, 0.15);
+        }
+
+        .tool-card.active {
+            border-color: #f472b6;
+            background: rgba(244, 114, 182, 0.1);
+            box-shadow: 0 0 30px rgba(244, 114, 182, 0.1);
+        }
+
+        .tool-card i {
+            font-size: 1.8rem;
+            color: #c084fc;
+            margin-bottom: 8px;
+        }
+
+        .tool-card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #c084fc;
+        }
+
+        .tool-card p {
+            font-size: 0.75rem;
+            color: #d8b4fe;
+            font-weight: 300;
+            margin-top: 4px;
+        }
+
+        /* Workspace */
+        .workspace {
+            background: rgba(20, 10, 30, 0.85);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid #7e22ce;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed #7e22ce;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(10, 5, 20, 0.6);
+            margin-bottom: 20px;
+        }
+
+        .upload-zone:hover {
+            border-color: #f472b6;
+            background: rgba(244, 114, 182, 0.05);
+        }
+
+        .upload-zone.drag {
+            border-color: #f472b6;
+            background: rgba(244, 114, 182, 0.1);
+            transform: scale(1.01);
+        }
+
+        .upload-zone i {
+            font-size: 3rem;
+            color: #c084fc;
+            margin-bottom: 10px;
+        }
+
+        .upload-zone h3 {
+            color: #d8b4fe;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .upload-zone p {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        .upload-zone .file-name {
+            color: #f472b6;
+            font-weight: 600;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .upload-zone .file-name.show {
+            display: block;
+        }
+
+        /* Editor */
+        .editor-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #7e22ce;
+            margin-bottom: 20px;
+            background: #1a1a1e;
+        }
+
+        .editor-wrapper .CodeMirror {
+            height: 300px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            background: #1a1a1e;
+            color: #d4d4d4;
+        }
+
+        .editor-wrapper .CodeMirror-gutters {
+            background: #1a1a1e;
+            border-right: 1px solid #333;
+        }
+
+        .editor-wrapper .CodeMirror-linenumber {
+            color: #858585;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #9333ea, #7e22ce);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(192, 132, 252, 0.6);
+            background: linear-gradient(135deg, #c084fc, #9333ea);
+        }
+
+        .btn-primary:disabled {
+            background: #4c1d95;
+            color: #a855f7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(30, 15, 45, 0.8);
+            color: #d8b4fe;
+            border: 1px solid #7e22ce;
+        }
+
+        .btn-secondary:hover {
+            background: #581c87;
+            border-color: #f472b6;
+            color: #f472b6;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(34, 197, 94, 0.4);
+        }
+
+        /* Result */
+        .result-wrapper {
+            border-radius: 12px;
+            border: 1px solid #7e22ce;
+            overflow: hidden;
+            background: #1a1a1e;
+            display: none;
+        }
+
+        .result-wrapper.show {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(10, 5, 20, 0.8);
+            border-bottom: 1px solid #333;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .result-header .info {
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+
+        .result-header .info strong {
+            color: #c084fc;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .result-actions button {
+            background: transparent;
+            border: 1px solid #7e22ce;
+            color: #d8b4fe;
+            padding: 5px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+
+        .result-actions button:hover {
+            background: #581c87;
+            border-color: #f472b6;
+            color: #f472b6;
+        }
+
+        .result-box {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #1a1a1e;
+        }
+
+        .result-box pre {
+            margin: 0;
+            background: transparent !important;
+        }
+
+        .result-box code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(244, 114, 182, 0.2);
+            border-top: 4px solid #f472b6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .tools {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: 100%;
+            }
+
+            .result-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .brand h1 {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .workspace {
+                padding: 15px;
+            }
+
+            .upload-zone {
+                padding: 25px 15px;
+            }
+
+            .upload-zone i {
+                font-size: 2rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #7e22ce;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c084fc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="brand">
+                    <img src="https://i.ibb.co.com/gL6r4q6p/hinata.jpg" alt="Logo">
+                    <div>
+                        <h1>LUA DEOBFUSCATOR</h1>
+                        <span>by pinoolavender • API v1.0</span>
+                    </div>
+                </div>
+                <div class="api-status">
+                    <span class="dot"></span>
+                    <span style="font-size:0.85rem;color:#d8b4fe;">API Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tool Selection -->
+        <div class="tools">
+            <div class="tool-card active" id="card-prometheus" onclick="selectTool('prometheus')">
+                <i class="fas fa-shield-halved"></i>
+                <h3>PROMETHEUS</h3>
+                <p>Deobfuscate Prometheus</p>
+            </div>
+            <div class="tool-card" id="card-moonsec" onclick="selectTool('moonsec')">
+                <i class="fas fa-lock"></i>
+                <h3>MOONSEC V3</h3>
+                <p>Bypass & decode Moonsec</p>
+            </div>
+            <div class="tool-card" id="card-generic" onclick="selectTool('generic')">
+                <i class="fas fa-wand-magic-sparkles"></i>
+                <h3>GENERIC</h3>
+                <p>General deobfuscator</p>
+            </div>
+        </div>
+
+        <!-- Workspace -->
+        <div class="workspace">
+            <!-- Upload Zone -->
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Upload File .lua atau .txt</h3>
+                <p>Drag & drop atau klik untuk memilih file</p>
+                <div class="file-name" id="fileName"></div>
+                <input type="file" id="fileInput" accept=".lua,.txt" style="display:none;">
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-wrapper">
+                <textarea id="codeEditor" placeholder="Tempelkan kode Lua di sini..."></textarea>
+            </div>
+
+            <!-- Buttons -->
+            <div class="btn-group">
+                <button class="btn btn-primary" id="btnProcess" onclick="processCode()">
+                    <i class="fas fa-play"></i> DEOBFUSCATE
+                </button>
+                <button class="btn btn-secondary" onclick="clearAll()">
+                    <i class="fas fa-eraser"></i> CLEAR
+                </button>
+                <button class="btn btn-secondary" onclick="loadExample()">
+                    <i class="fas fa-file-code"></i> EXAMPLE
+                </button>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="color:#d8b4fe;">Processing...</p>
+            </div>
+
+            <!-- Result -->
+            <div class="result-wrapper" id="resultWrapper">
+                <div class="result-header">
+                    <div class="info">
+                        <strong>Result</strong> 
+                        <span id="resultInfo">-</span>
+                    </div>
+                    <div class="result-actions">
+                        <button onclick="copyResult()"><i class="fas fa-copy"></i> Copy</button>
+                        <button onclick="downloadResult()"><i class="fas fa-download"></i> Download</button>
+                    </div>
+                </div>
+                <div class="result-box">
+                    <pre><code id="resultCode" class="language-lua"></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-lua.min.js"></script>
+
+    <script>
+        // ============================================
+        // KONFIGURASI
+        // ============================================
+        // GANTI URL INI DENGAN URL VERCEL ANDA
+        const API_URL = 'https://your-app.vercel.app/api/deobfuscator';
+        
+        let currentTool = 'prometheus';
+        let selectedFile = null;
+
+        // ============================================
+        // INIT CODE MIRROR
+        // ============================================
+        const textarea = document.getElementById('codeEditor');
+        const editor = CodeMirror.fromTextArea(textarea, {
+            mode: 'lua',
+            theme: 'monokai',
+            lineNumbers: true,
+            indentUnit: 4,
+            tabSize: 4,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            styleActiveLine: true,
+            lineWrapping: false,
+        });
+        editor.setSize(null, 300);
+
+        // ============================================
+        // FILE UPLOAD
+        // ============================================
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+
+        // Click upload
+        uploadZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File selected
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Drag and drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag');
+        });
+
+        uploadZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.endsWith('.lua') && !file.name.endsWith('.txt')) {
+                alert('Hanya file .lua atau .txt yang didukung');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = `📄 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            fileName.classList.add('show');
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                editor.setValue(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        // ============================================
+        // TOOL SELECTION
+        // ============================================
+        function selectTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.getElementById(`card-${tool}`).classList.add('active');
+        }
+
+        // ============================================
+        // PROCESS CODE
+        // ============================================
+        async function processCode() {
+            const code = editor.getValue().trim();
+            const btn = document.getElementById('btnProcess');
+            const loading = document.getElementById('loading');
+            const resultWrapper = document.getElementById('resultWrapper');
+            const resultCode = document.getElementById('resultCode');
+            const resultInfo = document.getElementById('resultInfo');
+
+            // Validasi
+            if (!code) {
+                alert('Masukkan kode Lua atau upload file terlebih dahulu!');
+                return;
+            }
+
+            // Show loading
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSING...';
+            loading.classList.add('show');
+            resultWrapper.classList.remove('show');
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        api: currentTool,
+                        options: {
+                            removeComments: true,
+                            decodeHex: true,
+                            decodeUnicode: true,
+                            decodeBase64: true,
+                            cleanWhitespace: true,
+                            normalizeVariables: true,
+                            prettyPrint: false
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                // Hide loading
+                loading.classList.remove('show');
+
+                if (data.success) {
+                    resultCode.textContent = data.result;
+                    Prism.highlightElement(resultCode);
+                    
+                    resultInfo.innerHTML = `
+                        ${data.metadata.tool.toUpperCase()} • 
+                        ${data.metadata.originalLength} → ${data.metadata.deobfuscatedLength} chars • 
+                        ${data.metadata.executionTime} • 
+                        ${data.metadata.compressionRatio}
+                    `;
+                    
+                    resultWrapper.classList.add('show');
+                } else {
+                    alert(`Error: ${data.error || 'Unknown error'}`);
+                }
+
+            } catch (error) {
+                loading.classList.remove('show');
+                alert(`Network error: ${error.message}\n\nPastikan API URL sudah benar dan server berjalan.`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> DEOBFUSCATE';
+            }
+        }
+
+        // ============================================
+        // COPY RESULT
+        // ============================================
+        function copyResult() {
+            const code = document.getElementById('resultCode').textContent;
+            if (!code) {
+                alert('Tidak ada hasil untuk disalin');
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => {
+                    alert('✅ Berhasil disalin!');
+                }).catch(() => {
+                    fallbackCopy(code);
+                });
+            } else {
+                fallbackCopy(code);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('✅ Berhasil disalin!');
+            } catch (e) {
+                alert('❌ Gagal menyalin');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // ============================================
+        // DOWNLOAD RESULT
+        // ============================================
+        function downloadResult() {
+            const code = document.getElementById('resultCode').textContent;
+            if (!code) {
+                alert('Tidak ada hasil untuk diunduh');
+                return;
+            }
+
+            const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `deobfuscated_${currentTool}.lua`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ============================================
+        // CLEAR
+        // ============================================
+        function clearAll() {
+            editor.setValue('');
+            document.getElementById('resultWrapper').classList.remove('show');
+            document.getElementById('fileName').classList.remove('show');
+            document.getElementById('fileName').textContent = '';
+            selectedFile = null;
+            fileInput.value = '';
+        }
+
+        // ============================================
+        // LOAD EXAMPLE
+        // ============================================
+        function loadExample() {
+            const example = `-- Obfuscated Lua Code Example
+local _0x1234 = "\\x48\\x65\\x6c\\x6c\\x6f"
+local _0x5678 = "\\x57\\x6f\\x72\\x6c\\x64"
+local function _0x9abc()
+    print(_0x1234 .. " " .. _0x5678)
+end
+_0x9abc()
+
+-- Base64 encoded string
+local x = decode_string("SGVsbG8gV29ybGQh")
+print(x)
+
+-- String.char obfuscation
+local y = string.char(72, 101, 108, 108, 111)
+print(y)`;
+            
+            editor.setValue(example);
+        }
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Enter = Process
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                processCode();
+            }
+        });
+
+        // ============================================
+        // AUTO-RUN ON FILE UPLOAD (Optional)
+        // ============================================
+        // Uncomment untuk auto process setelah upload
+        // const originalHandleFile = handleFile;
+        // handleFile = function(file) {
+        //     originalHandleFile(file);
+        //     setTimeout(processCode, 500);
+        // };
+
+        console.log('🚀 Lua Deobfuscator Ready!');
+        console.log(`📡 API Endpoint: ${API_URL}`);
+        console.log('🔧 Current Tool:', currentTool);
+        console.log('💡 Tip: Ctrl+Enter untuk proses');
+    </script>
+
+</body>
+</html>
